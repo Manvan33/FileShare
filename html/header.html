@@ -146,6 +146,7 @@ form input[type=submit] {
 	font-weight: bold;
 }
 .action-button {
+	cursor: pointer;
 	border-radius: 8px;
 	line-height: 100%;
 	min-height: 2em;
@@ -157,7 +158,11 @@ form input[type=submit] {
 	margin-left: 0.5em;
 	margin-top: 15px;
 }
+.action-button input {
+	cursor: inherit;
+}
 .action-button.disabled {
+	cursor: not-allowed;
 	color: gray;
 	border-color: gray;
 }
@@ -228,7 +233,6 @@ li>span {
 }
 #qr-overlay {
 	margin:auto;
-	filter:invert();
 }
 .notif {
 	border-radius: 5px;
@@ -252,7 +256,7 @@ li>span {
 	body {
 		font-size: 0.9em;
 	}
-	.phone-only {
+	footer.phone-only {
 		display: flex;
 		justify-content: space-evenly;
 		padding: 0.3em 0;

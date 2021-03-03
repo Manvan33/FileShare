@@ -224,7 +224,8 @@ http.createServer(function (req, res) {
                 res.write(populateVariables(header));
                 let output =
                     "<section>" +
-                        "<h3>Listing files in directory : <code>" + options.SHARED_PATH + "</code></h3>" +
+                        "<h2>List of shared files</h2>" +
+                        "<h3>Shared directory path : <code>" + options.SHARED_PATH + "</code></h3>" +
                         "<ul>";
                 if (files.length<1) {
                     output += "<li><a href='#' style='font-style: italic'>(Empty directory)</a></li>";

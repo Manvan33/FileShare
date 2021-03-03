@@ -9,8 +9,8 @@
 							<span>Select file(s).</span>
 						</div>
 					</div>
-					<div class="flex disabled action-button">
-						<input disabled type="submit" title="First select a file to upload" value="Upload">
+					<div class="flex disabled action-button" title="First select a file to upload">
+						<input disabled type="submit" value="Upload">
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>
 					</div>
 				</div>
@@ -39,6 +39,7 @@
 			}
 			self.parentElement.parentElement.querySelector(".action-button").classList.remove("disabled");
 			self.parentElement.parentElement.querySelector(".action-button input").disabled = false;
+			self.parentElement.parentElement.querySelector(".action-button").title = "Click !";
 		}
     </script>
 </body>
