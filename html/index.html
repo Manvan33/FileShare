@@ -1,0 +1,45 @@
+		<section>
+			<form action="/fileupload" method="post" enctype="multipart/form-data">
+			<h2>Share a file</h2>
+				<div class="flex">
+					<div id="fileInputs">
+						<input id="fileSelect" onchange="allowSubmit(this)" type="file" multiple name="filetoupload">
+						<div id="fakeSelect">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+							<span>Select file(s).</span>
+						</div>
+					</div>
+					<div class="flex disabled action-button">
+						<input disabled type="submit" title="First select a file to upload" value="Upload">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>
+					</div>
+				</div>
+			</form>
+		</section>
+		<section>
+			<form action="/link" method="post">
+			<h2>Share a link/text</h2>
+				<div class="flex">
+					<input oninput="allowSubmit(this)" id="link" type="text" placeholder="https://manvan.fr/" name="link">
+					<div class="flex disabled action-button">
+						<input disabled type="submit" value="Send">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+					</div>
+				</div>
+			</form>
+			<h3>Previous links :</h3>
+			<ul class="flex">$LinksList</ul>
+		</section>
+	</div> <!-- closing main div-->
+    <script type="text/javascript">
+		function allowSubmit(self) {
+			if (self.id === "fileSelect" && self.files.length > 0) {
+				self.parentElement.querySelector("#fakeSelect span").innerHTML = self.files.length +
+						(self.files.length > 1 ? " files" : " file") + " selected";
+			}
+			self.parentElement.parentElement.querySelector(".action-button").classList.remove("disabled");
+			self.parentElement.parentElement.querySelector(".action-button input").disabled = false;
+		}
+    </script>
+</body>
+</html>

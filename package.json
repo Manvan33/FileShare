@@ -1,0 +1,25 @@
+{
+  "name": "fileshare",
+  "version": "1.1.0",
+  "description": "Simple LAN file sharing server",
+  "main": "server.js",
+  "bin": "server.js",
+  "files": [
+    "html/index.html",
+    "html/config.html",
+    "html/header.html"
+  ],
+  "dependencies": {
+    "formidable": "^1.2.2",
+    "ip": "^1.1.5",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "author": "Manvan33",
+  "license": "MIT"
+}

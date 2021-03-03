@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>LAN FileShare</title>
+	<meta name="viewport"
+		id="viewport"
+		content="width=device-width,
+					height=device-height,
+					initial-scale=1.0,
+					user-scalable=yes"/> 
+	<meta charset="utf-8">
+	<style type="text/css">
+* {
+	font-family: sans-serif;
+	padding: 0;
+	margin: 0;
+}
+html, body {
+	color: white;
+	background: #24292E;
+	font-size: 15px;
+}
+footer.phone-only {
+	display: none;
+}
+h1 {
+	font-size: 40px;
+	font-family: "Courier", "Courier New", "Droid Sans Regular", monospace;
+	font-variant: small-caps;
+	margin-right: 10px;
+}
+header {
+	display: flex;
+	background: #389480;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0 2em;
+}
+nav {
+	padding: 0 1em;
+	flex-grow: 1;
+	text-align: right;
+}
+nav a {
+	padding: 0.5em 1em;
+	font-size: 1.2em;
+}
+nav a:hover {
+	background: rgba(255, 255, 255, 0.08);
+}
+nav a.selected {
+	border-bottom: 4px solid white;
+}
+h2 {
+	text-align: center;
+	margin: 5px;
+	font-size: 25px;
+	font-variant: small-caps;
+}
+h3 {
+	margin: 30px 0 12px 10px;
+}
+#main {
+	margin: 40px auto;
+	max-width: 800px;
+}
+a {
+	text-decoration: none;
+	color: white;
+}
+ul {
+	border-radius: 5px;
+	padding: 0.6em 0;
+	flex-direction: column !important;
+	background-color: #24292E;
+}
+ul li {
+	width: 100%;
+	height: 2em;
+	line-height: 2em;
+	list-style: none;
+}
+ul li:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+ul li a, ul li i {
+	padding: 0.2em 1em;
+	width: 100%;
+	position: relative;
+	text-align: left;
+	overflow: hidden;
+	height: 100%;
+}
+ul li i {
+	display: inline-block;
+	text-align: center;
+}
+.fileLink {
+	position: absolute;
+	white-space: nowrap;
+	transform: translateX(0);
+	transition: 1s;
+	text-decoration: underline;
+}
+a:hover .fileLink {
+	transform: translateX(min(min(600px,65vw) - 100%, 0px));
+	transition-duration: 2s;
+}
+
+section {
+	border-radius: 6px;
+	background-color: rgba(255, 255, 255, 0.06);
+	margin-bottom: 40px;
+	padding: 1em 2em;
+}
+form {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+form>*:not(h2) {
+	text-align: left;
+	min-width: 90%;
+	font-size: 1.2em;
+	padding: 0.5em;
+	background: transparent;
+}
+form label {
+	margin-top: 0.5em;
+	font-weight: bold;
+}
+form input[type=text], form input[type=number] {
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid #389480;
+	color: white;
+}
+form input[type=text]:focus, form input[type=number]:focus {
+	outline: none;
+	border-bottom: 2px solid #5CC1AB;
+}
+form input[type=submit] {
+	background-color: transparent;
+	border: none;
+	color: inherit;
+	font-weight: bold;
+}
+.action-button {
+	border-radius: 8px;
+	line-height: 100%;
+	min-height: 2em;
+	color: #ECA009;
+	min-width: auto;
+	border: 2px solid #ECA009;
+	text-align: center;
+	padding: 0.1em 1em;
+	margin-left: 0.5em;
+	margin-top: 15px;
+}
+.action-button.disabled {
+	color: gray;
+	border-color: gray;
+}
+.action-button svg {
+	margin-left: 0.5em;
+}
+#fakeSelect svg {
+	position: relative;
+	display: inline;
+	bottom: -5px;
+}
+.flex {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+.flex input {
+	flex-grow: 1;
+}
+li>span {
+	height: 2em;
+	flex-direction: row-reverse;
+}
+.icon {
+	cursor: pointer;
+	height: 1.8em;
+	width: 1.8em;
+	padding: 0.4em;
+	filter: invert();
+	margin-right: auto;
+	transition: 0.2s;
+}
+.icon.feather-copy {
+	filter: none;
+}
+.icon:hover {
+	color: #ECA009;
+}
+
+#fileInputs {
+	flex-grow: 1;
+}
+#fileSelect {
+	position: relative;
+	height: 2em;
+	width: 100%;
+	opacity: 0;
+	z-index: 20;
+}
+#fakeSelect {
+	position: relative;
+	height: 0;
+	top: -2em;
+	z-index: 0;
+	text-align: center;
+}
+#overlay {
+  position: fixed; /* Sit on top of the page content */
+  display: none; /* Hidden by default */
+  width: 100%; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  background-color: rgba(255,255,255,0.4); /* White background with opacity */
+  z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+  cursor: pointer; /* Add a pointer on hover */
+}
+#qr-overlay {
+	margin:auto;
+	filter:invert();
+}
+.notif {
+	border-radius: 5px;
+	visibility: hidden;
+	opacity: 0;
+	transition: 0.5s;
+	color: white;
+	padding: 0.5em 1em;
+	position: absolute;
+	transform: translateX(-60px);
+	background: #389480;
+}
+.notif-shown {
+	visibility: visible;
+	opacity: 1;
+	transform: translateX(-90px);
+	transition: 0.3s;
+}
+
+@media screen and (max-width: 800px) {
+	body {
+		font-size: 0.9em;
+	}
+	.phone-only {
+		display: flex;
+		justify-content: space-evenly;
+		padding: 0.3em 0;
+		background: #389480;
+		width: 100%;
+		align-items: center;
+		position: fixed;
+		bottom: 0;
+		text-align: center;
+	}
+	.phone-only a.selected {
+		color: #ECA009;
+	}
+	h1 {
+		font-size: 30px;
+	}
+	nav {
+		display: none;
+	}
+	section {
+		padding: 0.5em;
+	}
+	#sendLink, #uploadBtn {
+		padding: 0 0.3em;
+		line-height: 2em;
+	}
+	form>*:not(h2) {
+		font-size: 1em;
+	}
+}
+	</style>
+	<script type="text/javascript">
+		function selectedTab() {
+
+			switch (document.location.pathname) {
+				case "/":
+					if (document.location.hostname==="127.0.0.1") {
+						document.querySelectorAll(".nav-options").forEach(node => {node.classList.add("selected");});
+					} else {
+						document.querySelectorAll(".nav-share").forEach(node => {node.classList.add("selected");});
+					}
+					break;
+				case "/list":
+					document.querySelectorAll(".nav-list").forEach(node => {node.classList.add("selected");});
+					break;
+			}
+		}
+		function openQr(link) {
+			document.querySelector('#qr-overlay').src=link;
+			document.querySelector('#overlay').style.display="flex";
+		}
+		function copyLink(self) {
+			self.parentElement.children[0].select();
+			document.execCommand("copy");
+			self.parentElement.querySelector('.notif').classList.add('notif-shown');
+			setTimeout(function(element) {
+				element.classList.remove('notif-shown');
+			},1500,self.parentElement.querySelector('.notif'));
+		}
+		function hideSelf(self) {
+			self.style.display="none";
+		}
+	</script>
+</head>
+<body onload="selectedTab()">
+	<div id="overlay" onclick="hideSelf(this)">
+		<img id='qr-overlay' src=''/>
+	</div>
+	<header>
+		<div class="flex">
+			<h1>LAN FileShare</h1>
+			<a href="#" onclick="openQr('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+window.location.href);">
+			<!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
+			<svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
+				<metadata> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
+				<g><path d="M417.2,537H57.6c-24.4,0-44.1,19.7-44.1,44.1v359.6c0,24.4,19.7,44.1,44.1,44.1h359.6c24.4,0,44.1-19.7,44.1-44.1V581C461.2,556.7,441.5,537,417.2,537z M373.1,896.5H101.6V625.1h271.5L373.1,896.5L373.1,896.5z"/><path d="M54.1,463h359.6c24.4,0,44.1-19.7,44.1-44.1V59.4c0-24.4-19.7-44.1-44.1-44.1H54.1C29.7,15.3,10,35,10,59.4V419C10,443.3,29.7,463,54.1,463z M98.1,103.5h271.5v271.5H98.1V103.5z"/><path d="M582.8,463h359.6c24.4,0,44.1-19.7,44.1-44.1V59.4c0-24.4-19.7-44.1-44.1-44.1H582.8c-24.4,0-44.1,19.7-44.1,44.1V419C538.7,443.3,558.4,463,582.8,463z M626.8,103.5h271.5v271.5H626.8V103.5z"/><path d="M938.8,847.2c23.2,0,41.6-18.1,43.4-40.8h0.6V581c0-24.4-19.7-44.1-44.1-44.1c-24.4,0-44.1,19.7-44.1,44.1v178.1h-88.1l0-178.1c0-24.4-19.7-44.1-44.1-44.1h0H582.8c-24.4,0-44.1,19.7-44.1,44.1v101.9v257.7c0,24.4,19.7,44.1,44.1,44.1s44.1-19.7,44.1-44.1V727h91.7v76.2c0,24.4,19.7,44.1,44.1,44.1H938.8L938.8,847.2z"/><path d="M824.8,869.3h-18.2c-24.4,0-44.1,19.7-44.1,44.1v27.3c0,24.4,19.7,44.1,44.1,44.1h18.2c24.4,0,44.1-19.7,44.1-44.1v-27.3C868.8,889,849.1,869.3,824.8,869.3z"/><path d="M945.9,869.3h-18.2c-24.4,0-44.1,19.7-44.1,44.1v27.3c0,24.4,19.7,44.1,44.1,44.1h18.2c24.4,0,44.1-19.7,44.1-44.1v-27.3C990,889,970.3,869.3,945.9,869.3z"/><path d="M771.7,181.5h-18.2c-24.4,0-44.1,19.7-44.1,44.1v27.3c0,24.4,19.7,44.1,44.1,44.1h18.2c24.4,0,44.1-19.7,44.1-44.1v-27.3C815.7,201.2,796,181.5,771.7,181.5z"/><path d="M246.4,181.5h-18.2c-24.4,0-44.1,19.7-44.1,44.1v27.3c0,24.4,19.7,44.1,44.1,44.1h18.2c24.4,0,44.1-19.7,44.1-44.1v-27.3C290.5,201.2,270.8,181.5,246.4,181.5z"/><path d="M237.4,818.5h18.2c24.4,0,44.1-19.7,44.1-44.1v-27.3c0-24.4-19.7-44.1-44.1-44.1h-18.2c-24.4,0-44.1,19.7-44.1,44.1v27.3C193.3,798.8,213,818.5,237.4,818.5z"/></g>
+			</svg>
+			</a>
+		</div>
+		<nav>
+			<a class="nav-share" href="http://$IP:$Port/">Share</a>
+		    <a class="nav-list" href="http://$IP:$Port/list">List files</a>
+			<a class="nav-options" href="http://127.0.0.1:8080">Options</a>
+		</nav>
+		<a href="/death"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-power"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg></a>
+	</header>
+	<footer class="flex phone-only">
+		<a class="nav-share" href="http://$IP:$Port/">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>
+			<p>Share</p>
+		</a>
+		<a class="nav-list" href="http://$IP:$Port/list">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+			<p>List</p>
+		</a>
+		<a class="nav-options" href="http://127.0.0.1:8080">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-settings"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+			<p>Options</p>
+		</a>
+	</footer>
+	<div id="main">

@@ -1,0 +1,9 @@
+/node_modules/
+/.idea
+/package-lock.json
+
+# Files created by the program :
+/links.txt
+/options.txt
+/shared
+/receive
