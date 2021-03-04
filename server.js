@@ -1,6 +1,7 @@
 const http = require('http');
 const formidable = require('formidable');
 const fs = require('fs');
+const templates = require('./templates.json');
 
 function createFolder(path) {
     if (!fs.existsSync(path)) {
@@ -171,7 +172,7 @@ http.createServer(function (req, res) {
             res.end();
         } else {
             console.log('[CONFIG] Interface opened');
-            let output = fs.readFileSync("html/header.html").toString() + fs.readFileSync('html/config.html').toString();
+            let output = templates.header + templates.config;
             output = populateVariables(output);
             res.write(output);
             return res.end();
@@ -208,7 +209,7 @@ http.createServer(function (req, res) {
                 });
                 linkStr += "</ul></p></body></html>";
                 res.writeHead(200, {'Content-Type': 'appl'});
-                res.write(populateVariables(fs.readFileSync('html/header.html')));
+                res.write(populateVariables(templates.header));
                 res.write(linkStr);
                 return res.end();
             });
@@ -220,7 +221,7 @@ http.createServer(function (req, res) {
                     return console.log('[FILE] Unable to scan directory: ' + err);
                 }
                 res.writeHead(200, {'Content-Type': 'appl'});
-                let header = fs.readFileSync('html/header.html')
+                let header = templates.header
                 res.write(populateVariables(header));
                 let output =
                     "<section>" +
@@ -285,8 +286,8 @@ http.createServer(function (req, res) {
             // =============== Index =============== //
         } else if (req.url === '/') {
             res.writeHead(200, {'Content-Type': 'text/html'});
-            let indexString = fs.readFileSync('html/index.html').toString();
-            let output = fs.readFileSync('html/header.html') + indexString.replace('$LinksList', getLinks());
+            let indexString = templates.index;
+            let output = templates.header + indexString.replace('$LinksList', getLinks());
             res.write(populateVariables(output));
             return res.end();
         } else {
