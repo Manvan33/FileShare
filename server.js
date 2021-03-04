@@ -13,29 +13,40 @@ class Options {
     constructor(filename) {
         this.RECEIVE_PATH = "receive/";
         this.SHARED_PATH = "shared/";
+        this.ALLOW_KILLING = "YES";
         this.SERVER_IP = require('ip').address();
         this.PORT = 8080;
         if (fs.existsSync(filename)) {
-            this.getFromFile(filename)
+            console.log("[OPTIONS] Found " + filename + ". Retrieving options...");
+            this.getFromFile(filename);
+            // Save to File to add missing options
+            this.saveToFile(filename);
         } else {
+            console.log("[OPTIONS] options.txt not found, creating...");
+            createFolder(this.RECEIVE_PATH);
+            createFolder(this.SHARED_PATH);
             this.saveToFile(filename)
         }
     }
     setOption(option, value) {
+        [option, value] = [option.trim(), value.trim()];
         switch (option){
             case "SHARED_PATH":
-                this.SHARED_PATH = value.trim().endsWith("/") ? value.trim() : value.trim() + "/";
+                this.SHARED_PATH = value.endsWith("/") ? value : value + "/";
                 createFolder(this.SHARED_PATH);
                 break;
             case "RECEIVE_PATH":
-                this.RECEIVE_PATH = value.trim().endsWith("/") ? value.trim() : value.trim() + "/";
+                this.RECEIVE_PATH = value.endsWith("/") ? value : value + "/";
                 createFolder(this.RECEIVE_PATH);
                 break;
             case "PORT":
-                this.PORT = parseInt(value.trim());
+                this.PORT = parseInt(value);
                 if (parseInt(this.PORT) < 1025) {
                     console.log("[WARNING] You must start the server as admin to be able to bind to this port ! ");
                 }
+                break;
+            case "ALLOW_KILLING":
+                this.ALLOW_KILLING = value.match(/^yes$/i) ? "YES" : "NO";
                 break;
             default:
                 console.log("[OPTIONS] Unknown option");
@@ -47,10 +58,13 @@ class Options {
         let content =
             "RECEIVE_PATH = " + this.RECEIVE_PATH + "\n" +
             "SHARED_PATH = " + this.SHARED_PATH + "\n" +
-            "PORT = " + this.PORT;
-        fs.writeFileSync('options.txt', content, new function() {
-            console.log("[CONFIG] Error saving to " + filename);
-        });
+            "PORT = " + this.PORT + "\n" +
+            "ALLOW_KILLING = " + this.ALLOW_KILLING + "\n";
+        try {
+        fs.writeFileSync('options.txt', content);
+        } catch (error) {
+            console.log("[CONFIG] Error saving to " + filename + "\n"+error);
+        }
     }
 
     getFromFile(filename) {
@@ -58,27 +72,13 @@ class Options {
         file.split('\n').forEach(line => this.getOptionFromLine(line));
     }
     getOptionFromLine(line) {
-        let option = line.split('=');
-            if (option.length > 1) {
-                console.log("[OPTIONS] Defining option " + option[0].trim() + " to " + option[1].trim());
-                switch (option[0].trim()) {
-                    case "SHARED_PATH":
-                        this.SHARED_PATH = option[1].trim().endsWith("/") ? option[1].trim() : option[1].trim() + "/";
-                        createFolder(this.SHARED_PATH);
-                        break;
-                    case "RECEIVE_PATH":
-                        this.RECEIVE_PATH = option[1].trim().endsWith("/") ? option[1].trim() : option[1].trim() + "/";
-                        createFolder(this.RECEIVE_PATH);
-                        break;
-                    case "PORT":
-                        this.PORT = option[1].trim();
-                        if (parseInt(this.PORT) < 1025) {
-                            console.log("[WARNING] You must start the server as admin to be able to bind to this port ! ");
-                        }
-                        break;
-                    default:
-                        console.log("[OPTIONS] Unknown option");
-                }
+        let words = line.split('=');
+            if (words.length == 2) {
+                let option;
+                let value;
+                [option, value] = [words[0].trim(), words[1].trim()];
+                console.log("[OPTIONS] Found option " + option + " = " + value);
+                this.setOption(option, value);
             }
     }
 }
@@ -92,7 +92,7 @@ class QR {
 }
 
 function absoluteLink(relativeLink) {
-    return "http://" + options.SERVER_IP + ":" + options.PORT + relativeLink;
+    return "http://" + options.SERVER_IP + ":" + CURRENT_PORT + relativeLink;
 }
 
 function getQrIcon(target) {
@@ -135,15 +135,17 @@ function getLinks() {
 
 
 function normalizeLink(link) {
-    return link.split("http://").join().split("www").join().split("https://").join();
+    return link.split("http://").join("").split("www").join("").split("https://").join("");
 }
 
 function populateVariables(html) {
     let output = html.toString();
     output = output.split("$IP").join(options.SERVER_IP)
-    .split("$Port").join(options.PORT)
+    .split("$Port").join(CURRENT_PORT)
     .split("$SharedPath").join(options.SHARED_PATH)
-    .split("$ReceivePath").join(options.RECEIVE_PATH);
+    .split("$ReceivePath").join(options.RECEIVE_PATH)
+    .split("$OptionPort").join(options.PORT)
+    .split("$AllowKilling").join(options.ALLOW_KILLING === "YES" ? "checked" : "" )
     return output;
 }
 
@@ -152,26 +154,37 @@ console.log('~     Starting LAN FileShare Server     ~');
 console.log('=========================================\n')
 
 const options = new Options("options.txt");
+// Current port will be different from the one in options if it was changed
+const CURRENT_PORT = options.PORT;
+
 const qrOptions = new QR();
 
-console.log("[START-UP] Server is running on : http://" + options.SERVER_IP + ":" + options.PORT + "\n");
+console.log("[START-UP] Server is running on : http://" + options.SERVER_IP + ":" + CURRENT_PORT + "\n");
 
 http.createServer(function (req, res) {
-
     // =============== Configuration interface =============== //
     if (req.headers['host'].startsWith("localhost") || req.headers['host'].startsWith("127.")) {
-        if (req.url === '/path') {
-            console.log("[CONFIG] Config updated");
+        if (req.url === '/update') {
+            console.log("[CONFIG] Config updated: ");
             let form = new formidable.IncomingForm();
             form.parse(req, function (err, fields, files) {
                 options.setOption("RECEIVE_PATH", fields["ReceivePath"]);
                 options.setOption("SHARED_PATH", fields["SharedPath"]);
                 options.setOption("PORT", fields["Port"]);
+                options.setOption("ALLOW_KILLING", fields["AllowKilling"] === "on" ? "yes" : "no");
+                options.saveToFile("options.txt");
             });
             res.writeHead(301, {"Location": "/"});
-            res.end();
+            return res.end();0
+        } // =============== Kill Server =============== //
+        else if (req.url === '/death') {
+            console.log("Closing FileShare");
+            res.writeHead(200, {'Content-Type': 'text/plain'});
+            res.write('Server closed');
+            setTimeout(process.exit, 100);
+            return res.end();
         } else {
-            console.log('[CONFIG] Interface opened');
+            // console.log('[CONFIG] Interface opened');
             let output = templates.header + templates.config;
             output = populateVariables(output);
             res.write(output);
@@ -277,18 +290,23 @@ http.createServer(function (req, res) {
             });
             res.writeHead(301, {"Location": "/"});
             res.end();
-            // =============== Kill Server =============== //
-        } else if (req.url === '/death') {
-            res.writeHead(200, {'Content-Type': 'text/plain'});
-            res.write('Server closed');
-            res.end();
-            process.exit();
             // =============== Index =============== //
         } else if (req.url === '/') {
             res.writeHead(200, {'Content-Type': 'text/html'});
             let indexString = templates.index;
             let output = templates.header + indexString.replace('$LinksList', getLinks());
             res.write(populateVariables(output));
+            return res.end();
+        } // =============== Kill Server =============== //
+        else if (req.url === '/death') {
+            console.log("Closing FileShare");
+            res.writeHead(200, {'Content-Type': 'text/plain'});
+            if (options.ALLOW_KILLING === "YES") {
+                res.write('Server closed');
+                setTimeout(process.exit, 100);
+            } else {
+                res.write("You don't have the permission to kill the server.");
+            }
             return res.end();
         } else {
             // =============== 404 =============== //
@@ -297,5 +315,4 @@ http.createServer(function (req, res) {
             return res.end();
         }
     }
-}).listen(options.PORT);
-
+}).listen(CURRENT_PORT);

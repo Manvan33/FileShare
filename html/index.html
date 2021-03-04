@@ -9,10 +9,10 @@
 							<span>Select file(s).</span>
 						</div>
 					</div>
-					<div class="flex disabled action-button" title="First select a file to upload">
-						<input disabled type="submit" value="Upload">
+					<button type="submit" disabled class="flex action-button" title="First select a file to upload">
+						<span>Upload</span>
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-up-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>
-					</div>
+					</button>
 				</div>
 			</form>
 		</section>
@@ -21,10 +21,10 @@
 			<h2>Share a link/text</h2>
 				<div class="flex">
 					<input oninput="allowSubmit(this)" id="link" type="text" placeholder="https://manvan.fr/" name="link">
-					<div class="flex disabled action-button">
-						<input disabled type="submit" value="Send">
+					<button type="submit" disabled class="flex action-button">
+						<span>Send</span>
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-					</div>
+					</button>
 				</div>
 			</form>
 			<h3>Previous links :</h3>
@@ -37,8 +37,7 @@
 				self.parentElement.querySelector("#fakeSelect span").innerHTML = self.files.length +
 						(self.files.length > 1 ? " files" : " file") + " selected";
 			}
-			self.parentElement.parentElement.querySelector(".action-button").classList.remove("disabled");
-			self.parentElement.parentElement.querySelector(".action-button input").disabled = false;
+			self.parentElement.parentElement.querySelector(".action-button").disabled = false;
 			self.parentElement.parentElement.querySelector(".action-button").title = "Click !";
 		}
     </script>
