@@ -5,15 +5,13 @@
   "main": "server.js",
   "bin": "server.js",
   "files": [
-    "html/index.html",
-    "html/config.html",
-    "html/header.html"
+    "templates.json"
   ],
   "dependencies": {
     "formidable": "^1.2.2",
-    "ip": "^1.1.5",
     "fs": "^0.0.1-security",
-    "http": "^0.0.1-security"
+    "http": "^0.0.1-security",
+    "ip": "^1.1.5"
   },
   "devDependencies": {},
   "scripts": {
@@ -21,5 +19,8 @@
     "start": "node server.js"
   },
   "author": "Manvan33",
-  "license": "MIT"
+  "license": "MIT",
+  "pkg": {
+    "assets": "html/*"
+  }
 }

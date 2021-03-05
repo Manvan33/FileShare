@@ -7,3 +7,6 @@
 /options.txt
 /shared
 /receive
+
+# Build files
+/builds/
