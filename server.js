@@ -259,16 +259,17 @@ http.createServer(function (req, res) {
         } else if (req.url.startsWith("/files/")) {
             console.log("[FILE] looking for " + options.SHARED_PATH + decodeURI(req.url.slice(7)));
             try {
-                let output = fs.readFileSync(options.SHARED_PATH + decodeURI(req.url.slice(7)));
                 res.writeHead(200, {'Content-Disposition': 'attachment; filename="' + decodeURI(req.url.slice(7)) + '"'});
-                res.write(output);
-                console.log('[FILE] Sent');
+                stream = fs.createReadStream(options.SHARED_PATH + decodeURI(req.url.slice(7)));
+                stream.on('data', _buff => { res.write(_buff); });
+                stream.on('end', () => { res.end(); });
+                console.log('[FILE] Sending');
             } catch (e) {
                 console.log('[FILE] Not Found');
+                console.log('[FILE] '+e);
                 res.writeHead(404);
-                res.write("File not foud");
+                return res.end("File not foud");
             }
-            return res.end();
         } else if (req.url.startsWith("/shared/")) {
             console.log("[FILE] looking for " + options.RECEIVE_PATH + decodeURI(req.url.slice(8)));
             try {
