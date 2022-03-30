@@ -10,7 +10,8 @@ const dir = './html/';
 files = fs.readdirSync(dir);
 
 files.forEach(file => {
-        templates[file.split(".")[0]] = fs.readFileSync(dir+file).toString();
+        console.log("Saving "+file);
+        templates[file.split(".")[0]] = fs.readFileSync(dir + file).toString();
 });
 
-fs.writeFileSync('./templates.json',JSON.stringify(templates));
+fs.writeFileSync('./templates.json', JSON.stringify(templates).replace(/(\\n)|(\\t)|(\\r)/g, ' ').replace(/(  +)/g, ' '));
