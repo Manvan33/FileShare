@@ -30,7 +30,7 @@ class Options {
     }
     setOption(option, value) {
         [option, value] = [option.trim(), value.trim()];
-        switch (option){
+        switch (option) {
             case "SHARED_PATH":
                 this.SHARED_PATH = value.endsWith("/") ? value : value + "/";
                 createFolder(this.SHARED_PATH);
@@ -61,9 +61,9 @@ class Options {
             "PORT = " + this.PORT + "\n" +
             "ALLOW_KILLING = " + this.ALLOW_KILLING + "\n";
         try {
-        fs.writeFileSync('options.txt', content);
+            fs.writeFileSync('options.txt', content);
         } catch (error) {
-            console.log("[CONFIG] Error saving to " + filename + "\n"+error);
+            console.log("[CONFIG] Error saving to " + filename + "\n" + error);
         }
     }
 
@@ -73,13 +73,13 @@ class Options {
     }
     getOptionFromLine(line) {
         let words = line.split('=');
-            if (words.length == 2) {
-                let option;
-                let value;
-                [option, value] = [words[0].trim(), words[1].trim()];
-                console.log("[OPTIONS] Found option " + option + " = " + value);
-                this.setOption(option, value);
-            }
+        if (words.length == 2) {
+            let option;
+            let value;
+            [option, value] = [words[0].trim(), words[1].trim()];
+            console.log("[OPTIONS] Found option " + option + " = " + value);
+            this.setOption(option, value);
+        }
     }
 }
 
@@ -141,12 +141,32 @@ function normalizeLink(link) {
 function populateVariables(html) {
     let output = html.toString();
     output = output.split("$IP").join(options.SERVER_IP)
-    .split("$Port").join(CURRENT_PORT)
-    .split("$SharedPath").join(options.SHARED_PATH)
-    .split("$ReceivePath").join(options.RECEIVE_PATH)
-    .split("$OptionPort").join(options.PORT)
-    .split("$AllowKilling").join(options.ALLOW_KILLING === "YES" ? "checked" : "" )
+        .split("$Port").join(CURRENT_PORT)
+        .split("$SharedPath").join(options.SHARED_PATH)
+        .split("$ReceivePath").join(options.RECEIVE_PATH)
+        .split("$OptionPort").join(options.PORT)
+        .split("$AllowKilling").join(options.ALLOW_KILLING === "YES" ? "checked" : "")
     return output;
+}
+
+const sendFile = (req, res, PATH) => {
+    const filename = decodeURI(req.url.slice(7));
+    console.log("[FILE] looking for " + PATH + filename);
+    try {
+        let a = req.url.slice(7);
+        if (a.length <= 0 || !fs.existsSync(PATH + filename)) {
+            throw "Not Found";
+        }
+        res.writeHead(200, { 'Content-Disposition': `attachment; filename="${filename}"` });
+        stream = fs.createReadStream(PATH + filename);
+        stream.pipe(res);
+        console.log('[FILE] Sending');
+    } catch (e) {
+        console.log('[FILE] Not Found');
+        console.log('[FILE] ' + e);
+        res.writeHead(404);
+        return res.end("File not foud");
+    }
 }
 
 console.log('\n=========================================')
@@ -174,12 +194,12 @@ http.createServer(function (req, res) {
                 options.setOption("ALLOW_KILLING", fields["AllowKilling"] === "on" ? "yes" : "no");
                 options.saveToFile("options.txt");
             });
-            res.writeHead(301, {"Location": "/"});
-            return res.end();0
+            res.writeHead(301, { "Location": "/" });
+            return res.end(); 0
         } // =============== Kill Server =============== //
         else if (req.url === '/death') {
             console.log("Closing FileShare");
-            res.writeHead(200, {'Content-Type': 'text/plain'});
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.write('Server closed');
             setTimeout(process.exit, 100);
             return res.end();
@@ -193,7 +213,7 @@ http.createServer(function (req, res) {
     } else {
         // =============== File Upload =============== //
         if (req.url === '/fileupload') {
-            let form = new formidable.IncomingForm({maxFileSize: 4000 * 1024 * 1024});
+            let form = new formidable.IncomingForm({ maxFileSize: 4000 * 1024 * 1024 });
             let files = [];
             let fields = [];
             form.on('field', function (field, value) {
@@ -221,7 +241,7 @@ http.createServer(function (req, res) {
                     }
                 });
                 linkStr += "</ul></p></body></html>";
-                res.writeHead(200, {'Content-Type': 'appl'});
+                res.writeHead(200, { 'Content-Type': 'appl' });
                 res.write(populateVariables(templates.header));
                 res.write(linkStr);
                 return res.end();
@@ -233,15 +253,15 @@ http.createServer(function (req, res) {
                 if (err) {
                     return console.log('[FILE] Unable to scan directory: ' + err);
                 }
-                res.writeHead(200, {'Content-Type': 'appl'});
+                res.writeHead(200, { 'Content-Type': 'appl' });
                 let header = templates.header
                 res.write(populateVariables(header));
                 let output =
                     "<section>" +
-                        "<h2>List of shared files</h2>" +
-                        "<h3>Shared directory path : <code>" + options.SHARED_PATH + "</code></h3>" +
-                        "<ul>";
-                if (files.length<1) {
+                    "<h2>List of shared files</h2>" +
+                    "<h3>Shared directory path : <code>" + options.SHARED_PATH + "</code></h3>" +
+                    "<ul>";
+                if (files.length < 1) {
                     output += "<li><a href='#' style='font-style: italic'>(Empty directory)</a></li>";
                 } else {
                     files.forEach(function (file) {
@@ -257,43 +277,20 @@ http.createServer(function (req, res) {
             });
             // =============== File download =============== //
         } else if (req.url.startsWith("/files/")) {
-            console.log("[FILE] looking for " + options.SHARED_PATH + decodeURI(req.url.slice(7)));
-            try {
-                res.writeHead(200, {'Content-Disposition': 'attachment; filename="' + decodeURI(req.url.slice(7)) + '"'});
-                stream = fs.createReadStream(options.SHARED_PATH + decodeURI(req.url.slice(7)));
-                stream.on('data', _buff => { res.write(_buff); });
-                stream.on('end', () => { res.end(); });
-                console.log('[FILE] Sending');
-            } catch (e) {
-                console.log('[FILE] Not Found');
-                console.log('[FILE] '+e);
-                res.writeHead(404);
-                return res.end("File not foud");
-            }
+            sendFile(req, res, options.SHARED_PATH);
         } else if (req.url.startsWith("/shared/")) {
-            console.log("[FILE] looking for " + options.RECEIVE_PATH + decodeURI(req.url.slice(8)));
-            try {
-                let output = fs.readFileSync(options.RECEIVE_PATH + decodeURI(req.url.slice(8)));
-                res.writeHead(200, {'Content-Disposition': 'attachment; filename="' + decodeURI(req.url.slice(8)) + '"'});
-                res.write(output);
-                console.log('[FILE] Sent');
-            } catch (e) {
-                console.log('[FILE] Not Found');
-                res.writeHead(404);
-                res.write("File not foud");
-            }
-            return res.end();
+            sendFile(req, res, options.RECEIVE_PATH);
         } else if (req.url === '/link') {
             // =============== Add Link =============== //
             let form = new formidable.IncomingForm();
             form.parse(req, function (err, fields) {
                 addLink(fields["link"]);
             });
-            res.writeHead(301, {"Location": "/"});
+            res.writeHead(301, { "Location": "/" });
             res.end();
             // =============== Index =============== //
         } else if (req.url === '/') {
-            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.writeHead(200, { 'Content-Type': 'text/html' });
             let indexString = templates.index;
             let output = templates.header + indexString.replace('$LinksList', getLinks());
             res.write(populateVariables(output));
@@ -301,7 +298,7 @@ http.createServer(function (req, res) {
         } // =============== Kill Server =============== //
         else if (req.url === '/death') {
             console.log("Closing FileShare");
-            res.writeHead(200, {'Content-Type': 'text/plain'});
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
             if (options.ALLOW_KILLING === "YES") {
                 res.write('Server closed');
                 setTimeout(process.exit, 100);
@@ -311,7 +308,7 @@ http.createServer(function (req, res) {
             return res.end();
         } else {
             // =============== 404 =============== //
-            res.writeHead(404, {'Content-Type': 'text/plain'});
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
             res.write("Error 404 : Not Found.");
             return res.end();
         }
