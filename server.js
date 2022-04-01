@@ -149,23 +149,34 @@ function populateVariables(html) {
     return output;
 }
 
+const listFiles = (PATH) => {
+    try {
+        return fs.readdirSync(PATH);
+    }
+    catch (err) {
+        return console.log('[FILE] Unable to scan directory: ' + err);
+    }
+}
+
 const sendFile = (req, res, PATH) => {
     const filename = decodeURI(req.url.slice(7));
     console.log("[FILE] looking for " + PATH + filename);
+    const files = listFiles(PATH);
     try {
-        let a = req.url.slice(7);
-        if (a.length <= 0 || !fs.existsSync(PATH + filename)) {
-            throw "Not Found";
+        if (files.includes(filename)) {
+            res.writeHead(200, { 'Content-Disposition': `attachment; filename="${filename}"` });
+            stream = fs.createReadStream(PATH + filename);
+            stream.pipe(res);
+            console.log('[FILE] Sending file...');
+        } else {
+            res.writeHead(404);
+            return res.end("File not foud");
         }
-        res.writeHead(200, { 'Content-Disposition': `attachment; filename="${filename}"` });
-        stream = fs.createReadStream(PATH + filename);
-        stream.pipe(res);
-        console.log('[FILE] Sending');
     } catch (e) {
-        console.log('[FILE] Not Found');
+        console.log('[FILE] Error reading file');
         console.log('[FILE] ' + e);
-        res.writeHead(404);
-        return res.end("File not foud");
+        res.writeHead(400);
+        return res.end("Filesystem Error");
     }
 }
 
@@ -241,7 +252,7 @@ http.createServer(function (req, res) {
                     }
                 });
                 linkStr += "</ul></p></body></html>";
-                res.writeHead(200, { 'Content-Type': 'appl' });
+                res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.write(populateVariables(templates.header));
                 res.write(linkStr);
                 return res.end();
@@ -249,32 +260,28 @@ http.createServer(function (req, res) {
             form.parse(req);
         } else if (req.url === '/list') {
             // =============== Files List =============== //
-            fs.readdir(options.SHARED_PATH, function (err, files) {
-                if (err) {
-                    return console.log('[FILE] Unable to scan directory: ' + err);
-                }
-                res.writeHead(200, { 'Content-Type': 'appl' });
-                let header = templates.header
-                res.write(populateVariables(header));
-                let output =
-                    "<section>" +
-                    "<h2>List of shared files</h2>" +
-                    "<h3>Shared directory path : <code>" + options.SHARED_PATH + "</code></h3>" +
-                    "<ul>";
-                if (files.length < 1) {
-                    output += "<li><a href='#' style='font-style: italic'>(Empty directory)</a></li>";
-                } else {
-                    files.forEach(function (file) {
-                        if (fs.lstatSync(options.SHARED_PATH + file).isFile()) {
-                            output += "<li class='flex'><a href='/files/" + file + "'><span class='fileLink'>" + file + '</span></a>';
-                            output += getIconSpan(absoluteLink('/files/' + file)) + "</li>";
-                        }
-                    });
-                }
-                output += "</ul></section></div></body></html>";
-                res.write(output);
-                return res.end();
-            });
+            files = listFiles(options.SHARED_PATH)
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            let header = templates.header
+            res.write(populateVariables(header));
+            let output =
+                "<section>" +
+                "<h2>List of shared files</h2>" +
+                "<h3>Shared directory path : <code>" + options.SHARED_PATH + "</code></h3>" +
+                "<ul>";
+            if (files.length < 1) {
+                output += "<li><a href='#' style='font-style: italic'>(Empty directory)</a></li>";
+            } else {
+                files.forEach(function (file) {
+                    if (fs.lstatSync(options.SHARED_PATH + file).isFile()) {
+                        output += "<li class='flex'><a href='/files/" + file + "'><span class='fileLink'>" + file + '</span></a>';
+                        output += getIconSpan(absoluteLink('/files/' + file)) + "</li>";
+                    }
+                });
+            }
+            output += "</ul></section></div></body></html>";
+            res.write(output);
+            return res.end();
             // =============== File download =============== //
         } else if (req.url.startsWith("/files/")) {
             sendFile(req, res, options.SHARED_PATH);
