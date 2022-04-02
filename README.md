@@ -33,3 +33,13 @@ You can then send a link or a QR-Code to the device on which you want to retriev
 ![image](https://user-images.githubusercontent.com/44155819/109873586-3ad1b200-7c6e-11eb-8d2d-1c5f9f3cb9ac.png)
 ### QR Sharing
 ![image](https://user-images.githubusercontent.com/44155819/109873647-5472f980-7c6e-11eb-9d1a-96886d79f62b.png)
+
+# Build
+
+Releases are built using [node pkg](https://github.com/tetratelabs/node-pkg).
+
+After installing, you can build binairies with 
+
+```bash
+$ pkg ./server.js
+```
