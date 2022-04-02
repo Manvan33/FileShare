@@ -159,7 +159,7 @@ const listFiles = (PATH) => {
 }
 
 const sendFile = (req, res, PATH) => {
-    const filename = decodeURI(req.url.slice(7));
+    const filename = decodeURI(req.url.slice(req.url.lastIndexOf("/")+1));
     console.log("[FILE] looking for " + PATH + filename);
     const files = listFiles(PATH);
     try {
